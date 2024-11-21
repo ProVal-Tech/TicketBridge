@@ -3,11 +3,14 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 using TicketBridge.Client.Pages;
+using TicketBridge.Client.Services;
 using TicketBridge.Components;
 using TicketBridge.Components.Account;
 using TicketBridge.Data;
+using TicketBridge.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddScoped<IGitHubService, ServerGitHubService>();
 
 // Add MudBlazor services
 builder.Services.AddMudServices();
@@ -21,6 +24,7 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, PersistingRevalidatingAuthenticationStateProvider>();
+
 
 builder.Services.AddAuthentication(options =>
     {
@@ -38,6 +42,8 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
+
+builder.Services.AddControllers();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
@@ -68,5 +74,6 @@ app.MapRazorComponents<App>()
 
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
+app.MapControllers();
 
 app.Run();
