@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using TicketBridge.Client.Services;
 using TicketBridge.Services;
 
 namespace TicketBridge.Controllers;
@@ -8,7 +9,7 @@ public class GitHubController() : Controller {
     }
 
     [HttpGet("api/github/appname")]
-    public async Task<IActionResult> GetAppName([FromServices] ServerGitHubService gitHubService) {
+    public async Task<IActionResult> GetAppName([FromServices] IGitHubService gitHubService) {
         return Ok(await gitHubService.GetAppName());
     }
 }
