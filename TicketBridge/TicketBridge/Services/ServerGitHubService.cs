@@ -6,6 +6,7 @@ using static Octokit.GraphQL.Variable;
 using System.Security.Cryptography;
 using System.Text;
 using TicketBridge.Client.Services;
+using Octokit.GraphQL.Model;
 
 namespace TicketBridge.Services;
 
@@ -15,6 +16,9 @@ public class ServerGitHubService : IGitHubService {
     private DateTime _expiration;
     private GitHubClient _appClient;
     private Octokit.GraphQL.Connection? _installationClient;
+
+    private static readonly ICompiledQuery<string> viewerLoginQuery = new Query().Viewer.Select(v => v.Login).Compile();
+
 
     public ServerGitHubService(IConfiguration configuration) {
         string privateKeyPath = configuration["github:private_key_path"]
@@ -32,31 +36,20 @@ public class ServerGitHubService : IGitHubService {
         };
     }
 
+    public async Task<string> GetAppName() {
+        await UpdateInstallationClient();
+        var app = await _appClient.GitHubApps.GetCurrent();
+        return app.Name;
+    }
+
     private async Task UpdateInstallationClient() {
         if (_installationClient is null || DateTime.UtcNow.AddMinutes(5) >= _expiration) {
             AccessToken accessToken = await _appClient.GitHubApps.CreateInstallationToken(_installationId);
             _expiration = accessToken.ExpiresAt.UtcDateTime;
             _installationClient = new(new Octokit.GraphQL.ProductHeaderValue("TicketBridge_GitHub"), accessToken.Token);
         }
-        var query = new Query()
-            .RepositoryOwner(Var("owner"))
-            .Repository(Var("repo"))
-            .Select(r => new {
-                r.Name,
-                r.Description
-            }).Compile();
-        var variables = new Dictionary<string, object> {
-            { "owner", "proval-tech" },
-            { "repo", "TicketBridge" },
-        };
-        var result = await _installationClient.Run(query, variables);
-        Console.WriteLine(result.Name + result.Description);
-    }
-
-    public async Task<string> GetAppName() {
-        await UpdateInstallationClient();
-        var app = await _appClient.GitHubApps.GetCurrent();
-        return app.Name;
+        string? result = await _installationClient.Run(viewerLoginQuery);
+        Console.WriteLine($"Login: {result}");
     }
 
     private static string GetJwtToken(string secretKey, string issuer) {
