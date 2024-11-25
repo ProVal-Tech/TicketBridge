@@ -1,5 +1,5 @@
 ﻿namespace TicketBridge.Client.Models;
 
 public interface IGitHubNode {
-    string Id { get; set; }
+    string? Id { get; set; }
 }
