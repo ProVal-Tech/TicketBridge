@@ -2,11 +2,7 @@
 using Microsoft.IdentityModel.Tokens;
 using Octokit;
 using Octokit.GraphQL;
-using static Octokit.GraphQL.Variable;
 using System.Security.Cryptography;
-using System.Text;
-using TicketBridge.Client.Services;
-using Octokit.GraphQL.Model;
 
 namespace TicketBridge.Services;
 
@@ -16,15 +12,18 @@ public class ServerGitHubService : IGitHubService {
     private DateTime _expiration;
     private GitHubClient _appClient;
     private Octokit.GraphQL.Connection? _installationClient;
-
-    private static readonly ICompiledQuery<string> viewerLoginQuery = new Query().Viewer.Select(v => v.Login).Compile();
-
+    private readonly string _gitHubOrg;
+    private readonly ICompiledQuery<string> _viewerLoginQuery;
+    private readonly ICompiledQuery<IEnumerable<GitHubProjectV2>> _orgProjectsQuery;
 
     public ServerGitHubService(IConfiguration configuration) {
         string privateKeyPath = configuration["github:private_key_path"]
             ?? throw new ArgumentNullException(nameof(configuration), "The configuration entry github:private_key_path must be set.");
         _clientId = configuration["github:client_id"]
             ?? throw new ArgumentNullException(nameof(configuration), "The configuration entry github:client_id must be set.");
+        _gitHubOrg = configuration["github:org"]
+            ?? throw new ArgumentNullException(nameof(configuration), "The configuration entry github:org must be set.");
+
         if (long.TryParse(configuration["github:installation_id"], out _installationId) == false) {
             throw new ArgumentNullException(nameof(configuration), "The configuration entry github:installation_id must be set.");
         }
@@ -34,6 +33,16 @@ public class ServerGitHubService : IGitHubService {
         _appClient = new(new Octokit.ProductHeaderValue("TicketBridge_GitHub")) {
             Credentials = new Credentials(token, AuthenticationType.Bearer)
         };
+        _viewerLoginQuery = new Query().Viewer.Select(v => v.Login).Compile();
+        _orgProjectsQuery = new Query()
+            .Organization(_gitHubOrg)
+            .ProjectsV2()
+            .AllPages()
+            .Select(p => new GitHubProjectV2 {
+                Title = p.Title,
+                ShortDescription = p.ShortDescription
+            })
+            .Compile();
     }
 
     public async Task<string> GetAppName() {
@@ -42,13 +51,19 @@ public class ServerGitHubService : IGitHubService {
         return app.Name;
     }
 
+    public async Task<IEnumerable<GitHubProjectV2>> GetOrgProjects() {
+        await UpdateInstallationClient();
+        var projects = await _installationClient.Run(_orgProjectsQuery);
+        return projects;
+    }
+
     private async Task UpdateInstallationClient() {
         if (_installationClient is null || DateTime.UtcNow.AddMinutes(5) >= _expiration) {
             AccessToken accessToken = await _appClient.GitHubApps.CreateInstallationToken(_installationId);
             _expiration = accessToken.ExpiresAt.UtcDateTime;
             _installationClient = new(new Octokit.GraphQL.ProductHeaderValue("TicketBridge_GitHub"), accessToken.Token);
         }
-        string? result = await _installationClient.Run(viewerLoginQuery);
+        string? result = await _installationClient.Run(_viewerLoginQuery);
         Console.WriteLine($"Login: {result}");
     }
 

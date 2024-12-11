@@ -13,12 +13,22 @@
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.*" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="8.*" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.*" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.11" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.*" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.*" />
     <PackageReference Include="Extensions.MudBlazor.StaticInput" Version="2.*" />
     <PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.2.1" />
     <PackageReference Include="Octokit" Version="13.0.1" />
     <PackageReference Include="Octokit.GraphQL" Version="0.4.0-beta" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <Using Include="TicketBridge.Client" />
+    <Using Include="TicketBridge.Client.Interfaces" />
+    <Using Include="TicketBridge.Client.Models" />
+    <Using Include="TicketBridge.Client.Services" />
+    <Using Include="TicketBridge.Data" />
   </ItemGroup>
 
 </Project>

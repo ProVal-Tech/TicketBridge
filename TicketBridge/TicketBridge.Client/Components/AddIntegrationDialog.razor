@@ -1,0 +1,57 @@
+﻿<MudDialog>
+    <DialogContent>
+        <MudSelect T="TicketBridgeIntegrationType" @ref="mudSelect" Placeholder="Select Integration Type" ValueChanged="OnSelectedIntegrationTypeChanged">
+            @foreach (TicketBridgeIntegrationType integrationType in Enum.GetValues<TicketBridgeIntegrationType>())
+            {
+                <MudSelectItem Value="integrationType">@integrationType</MudSelectItem>
+            }
+        </MudSelect>
+        @if (NewIntegration != null)
+        {
+            foreach (string key in NewIntegration.PropertyKeys)
+            {
+                <MudTextField Label="@key" @bind-Value="NewIntegration.Properties[key]" />
+            }
+        }
+        <MudButton
+        StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary"
+        Disabled="NewIntegration == null"
+        OnClick="Submit">Add Integration</MudButton>
+    </DialogContent>
+</MudDialog>
+
+@code {
+    private TicketBridgeIntegrationType? SelectedIntegrationType = null;
+    private ITicketBridgeIntegration? NewIntegration;
+
+    [CascadingParameter]
+    private MudDialogInstance MudDialog { get; set; } = default!;
+
+    private MudSelect<TicketBridgeIntegrationType> mudSelect;
+
+    protected override void OnInitialized()
+    {
+        OnSelectedIntegrationTypeChanged();
+    }
+
+    void OnSelectedIntegrationTypeChanged()
+    {
+        SelectedIntegrationType = mudSelect.Value;
+        switch (SelectedIntegrationType)
+        {
+            case TicketBridgeIntegrationType.GitHub:
+                NewIntegration = new GitHubIntegration();
+                break;
+            default:
+                NewIntegration = null;
+                break;
+        }
+    }
+
+    void Submit() {
+        if (NewIntegration != null) {
+            // Save the new integration
+            MudDialog.Close(DialogResult.Ok(NewIntegration));
+        }
+    }
+}

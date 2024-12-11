@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -15,7 +15,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Move\" />
+    <Using Include="TicketBridge.Client" />
+    <Using Include="TicketBridge.Client.Interfaces" />
+    <Using Include="TicketBridge.Client.Models" />
+    <Using Include="TicketBridge.Client.Services" />
+    <Using Include="TicketBridge.Client.Enums" />
   </ItemGroup>
 
 </Project>

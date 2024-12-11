@@ -1,0 +1,52 @@
+﻿@page "/integrations"
+@inject IDialogService DialogService
+
+<h3>Integrations</h3>
+
+<MudText Typo="Typo.h6">Active Integrations</MudText>
+
+<MudTable Items="activeIntegrations">
+    <HeaderContent>
+        <MudTh></MudTh>
+        <MudTh>Integration Type</MudTh>
+        <MudTh>Identifier</MudTh>
+        <MudTh>Actions</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd><MudIcon Icon="@context.FaIcon" Color="Color.Primary" /></MudTd>
+        <MudTd>@context.IntegrationType</MudTd>
+        <MudTd>@context.DisplayText</MudTd>
+        <MudTd>
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" Variant="Variant.Filled" Color="Color.Primary" />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" Variant="Variant.Filled" Color="Color.Secondary" />
+        </MudTd>
+    </RowTemplate>
+</MudTable>
+
+<MudFab StartIcon="@Icons.Material.Filled.Add" Label="Add Integration" Style="position:fixed; bottom:20px; right:20px" OnClick="OpenAddIntegrationDialog"/>
+@code {
+    string[] integrationTypes = new string[] { "GitHub" };
+    ITicketBridgeIntegration[] activeIntegrations = [];
+    protected override void OnInitialized()
+    {
+        GitHubIntegration ghInt = new();
+        ghInt.ClientId = "1234567890";
+        activeIntegrations = new ITicketBridgeIntegration[] { ghInt };
+    }
+
+    async Task OpenAddIntegrationDialog()
+    {
+        DialogOptions options = new() { CloseOnEscapeKey = true, BackdropClick = true, MaxWidth = MaxWidth.Medium };
+        IDialogReference dialogReference = await DialogService.ShowAsync<AddIntegrationDialog>("Add Integration", options);
+        StateHasChanged();
+        DialogResult? result = await dialogReference.Result;
+        if (result != null && !result.Canceled)
+        {
+            ITicketBridgeIntegration? newIntegration = result.Data as ITicketBridgeIntegration;
+            if (newIntegration != null)
+            {
+                activeIntegrations = activeIntegrations.Append(newIntegration).ToArray();
+            }
+        }
+    }
+}
